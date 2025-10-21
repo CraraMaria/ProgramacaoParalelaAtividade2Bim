@@ -3,7 +3,7 @@
 
 <p align="center">
   <strong>Lista de Exercícios — Programação Paralela (OpenMP)</strong><br>
-  <strong>Prof.:</strong> RodriGo Gonçalves<br>
+  <strong>Prof.:</strong> Rodrigo Gonçalves<br>
   <strong>Alunos:</strong> João Marcos Santos E Carvalho - 23122130063<br>
   Maria Clara Fontenele Silva - 2312130230
 </p>
