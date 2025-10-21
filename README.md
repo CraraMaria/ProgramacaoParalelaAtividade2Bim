@@ -3,7 +3,7 @@
 
 <p align="center">
   <strong>Lista de Exercícios — Programação Paralela (OpenMP)</strong><br>
-  <strong>Prof.:</strong> Rodrifo Gonçalves<br>
+  <strong>Prof.:</strong> RodriGo Gonçalves<br>
   <strong>Alunos:</strong> João Marcos Santos E Carvalho - 23122130063<br>
   Maria Clara Fontenele Silva - 2312130230
 </p>
@@ -49,7 +49,7 @@
 
 <hr>
 
-<h3>Exercício 5 — Escalonamento</h3>
+<h3>Exercício 5 — Escalonamento (<code>ex5.cpp</code>) </h3>
 <p>
   Use novamente o cálculo de <code>a[i] = x[i]^2 + y[i]^2 + z[i]^2</code>, mas:<br>
   a) Execute com <code>schedule(static)</code> e <code>schedule(dynamic, 1000)</code>.<br>
