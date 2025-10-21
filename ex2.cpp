@@ -9,7 +9,6 @@ c) Refaça o loop com #pragma omp parallel for reduction(+:soma).
 d) Compare os resultados e explique por que a diretiva reduction é necessária.
 --------------------------------------------------------------------------------------------------------------------------
 */
-*/
 
 #include <iostream>
 #include <omp.h> 
