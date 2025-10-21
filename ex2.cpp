@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------------------------------------------------------
-Autora    : Maria Clara Fontenele Silva 
-Matrícula : 2312130230
+Autores    : Maria Clara Fontenele Silva E João Marcos Santos E Carvalho
+Matrícula : 2312130230                      231112130063
 Exercício 2 — Paralelizando um "for" simples.
 --------------------------------------------------------------------------------------------------------------------------
 a) Crie um vetor v de tamanho 100 e inicialize todos os elementos com o valor 1.
@@ -13,93 +13,109 @@ d) Compare os resultados e explique por que a diretiva reduction é necessária.
 #include <iostream>
 #include <omp.h> 
 #include <vector> 
-/* #include <vector>  -> Ela fornece as diretivas para definir regiões e loops paralelos, 
-e funções para gerenciar e obter informações sobre as threads de execução. */
 
 namespace ConsoleColors {
-    // Cor
-    const std::string RESET = "\033[0m";      // Desfaz todas as formatações
-    const std::string VERMELHO = "\033[31m";  // Texto Vermelho
-    const std::string VERDE = "\033[32m";     // Texto Verde
-    // Estilo
-    const std::string NEGRITO = "\033[1m";    // Negrito/Brilho
+    const std::string RESET = "\033[0m";      
+    const std::string VERMELHO = "\033[31m";  
+    const std::string VERDE = "\033[32m";     
+    const std::string NEGRITO = "\033[1m";    
 }
 
 int main() {
-
-    // a) Crie um vetor v de tamanho 100 e inicialize todos os elementos com o valor 1.
     const int N = 100;
-    std::vector<int> v(N, 1);  //  vetor de tamanho "N" e inicializa todos os elementos com 1
-    std::vector<std::string> log(N); // para armazenar mensagens de cada índice
+    std::vector<int> v(N, 1);
+    std::vector<std::string> log(N);
 
-    // b) Escreva um loop sequencial que soma todos os elementos.
-    std::cout << "\n";
-    std::cout << "⋆｡‧˚ Soma Sequencial ˚‧｡⋆" <<"\n";
-    std::cout << "\n";
-    std::cout << "Calculando a soma sequencial dos elementos do vetor v de tamanho " << N << "\n";
-
-    // soma sequencial de todos os vetores de N
-    int soma_seq = 0;       // armazena o resultado da soma sequencial
-    for (int i = 0; i < N; i++) {  //loop para somar todos os elementos
-        soma_seq += v[i]; //adiciona o vetor[i] em soma_seq até ele i ser menor que N
-        // Imprime o progresso do cálculo sequencial
+    // Soma sequencial
+    std::cout << "\n⋆｡‧˚ Soma Sequencial ˚‧｡⋆\n\n";
+    int soma_seq = 0;
+    for (int i = 0; i < N; i++) {
+        soma_seq += v[i];
         std::cout << "i = " << i << " | v[i] = " << v[i] << " | soma parcial = " << soma_seq << std::endl;
     }
 
-    //c) Refaça o loop com #pragma omp parallel for reduction(+:soma).
-    std::cout << "\n";
-    std::cout << "⋆｡‧˚ Soma Paralela ˚‧｡⋆" << "\n";
-    std::cout << "\n";
-    std::cout << "\nCalculando a soma paralela dos elementos do vetor v de tamanho " << N << "\n";
+    // Escolha do modo: 0=reduction | 1=atomic | 2=critical
+    int modo = 0; // Altere aqui o modo que deseja testar
+    std::string nome_modo;
 
-    int soma_par = 0; // armazena o resultado paralelo, variável de redução
-    int num_threads = omp_get_max_threads();  // Obtém o número máximo de threads disponíveis
-    std::vector<int> somas_por_thread(num_threads, 0); // Rastreia as somas individuais de cada thread
+    if (modo == 0) nome_modo = "reduction";
+    else if (modo == 1) nome_modo = "atomic";
+    else nome_modo = "critical";
 
-    //reduction é necessaria para evitar condição de "corrida" para cada thread acumular sua parte sem interferir na outra
-    #pragma omp parallel for reduction(+:soma_par) // Cria threads e distribui as iterações do loop entre elas.
-    for (int i = 0; i < N; i++) {
-        int thread_id = omp_get_thread_num(); // pega o ID da thread atual
-        soma_par += v[i]; // thread-safe
-        somas_por_thread[thread_id] += v[i]; // acumula na posição da thread
-    
-       // Armazena a mensagem de log para impressão ordenada 
-        log[i] = "Thread " + std::to_string(thread_id) + " processando i = " + std::to_string(i) + " | v[i] = " + std::to_string(v[i]);
+    std::cout << "\n⋆｡‧˚ Soma Paralela com " << nome_modo << " ˚‧｡⋆\n\n";
+
+    int soma_par = 0;
+    int num_threads = omp_get_max_threads();
+    std::vector<int> somas_por_thread(num_threads, 0);
+
+    double inicio = omp_get_wtime();
+
+    if (modo == 0) {
+        // reduction
+        #pragma omp parallel for reduction(+:soma_par)
+        for (int i = 0; i < N; i++) {
+            int id = omp_get_thread_num();
+            soma_par += v[i];
+            somas_por_thread[id] += v[i];
+            log[i] = "Thread " + std::to_string(id) + " processando i=" + std::to_string(i);
+        }
+    } 
+    else if (modo == 1) {
+        // atomic
+        #pragma omp parallel
+        {
+            int id = omp_get_thread_num();
+            #pragma omp for
+            for (int i = 0; i < N; i++) {
+                #pragma omp atomic
+                soma_par += v[i]; // atualização atômica
+                somas_por_thread[id] += v[i];
+                log[i] = "Thread " + std::to_string(id) + " processando i=" + std::to_string(i);
+            }
+        }
+    } 
+    else if (modo == 2) {
+        // critical
+        #pragma omp parallel
+        {
+            int id = omp_get_thread_num();
+            #pragma omp for
+            for (int i = 0; i < N; i++) {
+                #pragma omp critical
+                {
+                    soma_par += v[i]; // região crítica
+                }
+                somas_por_thread[id] += v[i];
+                log[i] = "Thread " + std::to_string(id) + " processando i=" + std::to_string(i);
+            }
+        }
     }
 
-        // Impressão ordenada após o loop
-    for (int i = 0; i < N; i++) {
-        std::cout << log[i] << std::endl;
-    }
+    double fim = omp_get_wtime();
 
-    // Impressão da soma por thread, eu queria ver a soma que cada thread fez individualmente.
-    std::cout << "\n";
+    // Logs
+    for (int i = 0; i < N; i++) std::cout << log[i] << std::endl;
+
     std::cout << "\nSoma individual por thread:\n";
-    // threads que foram de fato utilizadas.
     for (int t = 0; t < num_threads; t++) {
-        std::cout << "Thread " << t << " somou: " << somas_por_thread[t] << std::endl;
+        if (somas_por_thread[t] > 0)
+            std::cout << "Thread " << t << " somou: " << somas_por_thread[t] << std::endl;
     }
 
     std::cout << "\nSoma paralela dos elementos: " << soma_par << std::endl;
+    std::cout << "Tempo total (" << nome_modo << "): " << (fim - inicio) * 1000 << " ms\n";
 
-
-    // d) Compare os resultados e explique por que a diretiva reduction é necessária.
-    std::cout << "\n";
-    std::cout << "⋆｡‧˚ Comparação de Resultados ˚‧｡⋆" << "\n";
-    std::cout << "\n";
+    // Comparação
+    std::cout << "\n⋆｡‧˚ Comparação de Resultados ˚‧｡⋆\n\n";
     if (soma_seq == soma_par) {
         std::cout << ConsoleColors::NEGRITO << ConsoleColors::VERDE
-              << "\nദ്ദി(˵ •̀ ᴗ - ˵ ) ✧ Maravilha! os resultados são iguais. A diretiva reduction garantiu que cada thread somasse corretamente."
-              << ConsoleColors::RESET << "\n";
+            << "ദ്ദി(˵ •̀ ᴗ - ˵ ) ✧ Os resultados são iguais! " << nome_modo << " funcionou corretamente."
+            << ConsoleColors::RESET << "\n";
     } else {
-              std::cout << ConsoleColors::NEGRITO << ConsoleColors::VERMELHO
-              << "\n(˶˃⤙˂˶) Poxa! Os resultados são diferentes. Isso pode indicar ausência ou erro na diretiva reduction."
-              << ConsoleColors::RESET << "\n" << "\n";
-
+        std::cout << ConsoleColors::NEGRITO << ConsoleColors::VERMELHO
+            << "(˶˃⤙˂˶) Resultados diferentes! Problema no uso de " << nome_modo
+            << ConsoleColors::RESET << "\n";
     }
-    // obs: 
-    // A diretiva 'reduction' é NECESSÁRIA para variáveis de acumulação (como a soma) porque, em um ambiente paralelo, várias threads tentariam ler e escrever na
-    // mesma variável simultaneamente. A REDUCTION resolve isso criando uma cópia PRIVADA da variável de redução para cada thread e no fim sincroniza as treads 
-    // e realiza, de forma segura, o armazenamento do resultado IFNAL na variável Global.
+
     return 0;
 }
