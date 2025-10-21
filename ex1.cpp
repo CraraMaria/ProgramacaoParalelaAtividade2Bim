@@ -8,13 +8,23 @@ b) Cada thread deve imprimir uma mensagem indicando seu número (omp_get_thread_
 c) Configure o programa para rodar com 4 threads.
 d) Adiciona uma operação 'atomic' para incrementar um contador.
 --------------------------------------------------------------------------------------------------------------------------
+As diretivas atomic e critical no OpenMP são ferramentas usadas para gerenciar o acesso a dados compartilhados 
+por múltiplas threads em uma região paralela.
 */
 
-#include <iostream> // biblioteca padrão de entrada e saída (std::cout, std::endl)
-#include <omp.h> // biblioteca OpenMP para programação paralela
+#include <iostream> // Entrada e saída (std::cout, std::endl)
+#include <omp.h> // biblioteca OpenMP
 
 // Variável compartilhada para o exemplo de 'atomic'
 int contador_compartilhado = 0;
+
+//Cores e Estilo
+namespace ConsoleColors {
+    const std::string RESET = "\033[0m";      // Desfaz todas as formatações
+    const std::string VERMELHO = "\033[31m";  // Texto Vermelho
+    const std::string VERDE = "\033[32m";     // Texto Verde
+    const std::string NEGRITO = "\033[1m";    // Negrito/Brilho
+}
 
 int main() {
     // Define a diretiva OpenMP para criar uma região paralela.
@@ -34,9 +44,10 @@ int main() {
         // Imprime a mensagem "Hello world from thread " com o número da thread e o total de threads
         std::cout << "Hello world from thread: " << thread_id << " of " << total_threads << std::endl;
 
-    } 
-
-    // Imprime o resultado final do contador após a região paralela
+    }
+    std::cout << ConsoleColors::NEGRITO << ConsoleColors::VERDE
+              << "\nResultado final do contador após a regão paralela"
+              << ConsoleColors::RESET << "\n" << "\n";
     std::cout << "\nValor final do contador compartilhado (via atomic): " << contador_compartilhado << std::endl;
     return 0;
 }
